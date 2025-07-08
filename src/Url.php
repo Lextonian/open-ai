@@ -158,7 +158,7 @@ class Url
      */
     public static function chatUrl(): string
     {
-        return self::OPEN_AI_URL . "/chat/completions";
+        return self::OPEN_AI_URL . "/responses";
     }
 
     /**
