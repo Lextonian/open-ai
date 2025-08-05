@@ -3,6 +3,7 @@
 namespace Orhanerday\OpenAi;
 
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 
 class OpenAi
 {
@@ -1010,6 +1011,10 @@ class OpenAi
         curl_close($curl);
 
         if (! $response) {
+            $errno = curl_errno($curl);
+            if (!empty($this->proxy) && in_array($errno, [5, 7, 52, 56, 97])) {
+                throw new ConnectionException(curl_error($curl));
+            }
             throw new Exception(curl_error($curl));
         }
 
