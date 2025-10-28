@@ -187,4 +187,13 @@ class Url
     {
         return self::OPEN_AI_URL . "/audio/speech";
     }
+
+    /**
+     * @param
+     * @return string
+     */
+    public static function videosUrl(): string
+    {
+        return self::OPEN_AI_URL . "/videos";
+    }
 }
