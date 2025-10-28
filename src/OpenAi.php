@@ -129,6 +129,53 @@ class OpenAi
         return $this->sendRequest($url, 'POST', $opts);
     }
 
+
+    /**
+     * @param $opts
+     * @return bool|string
+     */
+    public function videos($opts)
+    {
+        $url = Url::videosUrl();
+        $this->baseUrl($url);
+
+        return $this->sendRequest($url, 'POST', $opts);
+    }
+
+    /**
+     * @param string $videoId
+     * @param array $query
+     * @return bool|string
+     */
+    public function checkVideos($videoId, $query = [])
+    {
+        $this->addAssistantsBetaHeader();
+        $url = Url::videosUrl() . '/' . $videoId;
+        if (count($query) > 0) {
+            $url .= '?' . http_build_query($query);
+        }
+        $this->baseUrl($url);
+
+        return $this->sendRequest($url, 'GET');
+    }
+
+    /**
+     * @param string $videoId
+     * @param array $query
+     * @return bool|string
+     */
+    public function getVideos($videoId, $query = [])
+    {
+        $this->addAssistantsBetaHeader();
+        $url = Url::videosUrl() . '/' . $videoId . '/content';
+        if (count($query) > 0) {
+            $url .= '?' . http_build_query($query);
+        }
+        $this->baseUrl($url);
+
+        return $this->downloadVideoContent($url);
+    }
+
     /**
      * @param $opts
      * @return bool|string
@@ -721,7 +768,7 @@ class OpenAi
 
             $this->stream_method = $stream;
         }
-        
+
         $this->addAssistantsBetaHeader();
         $url = Url::threadsUrl() . '/' . $threadId . '/runs';
         $this->baseUrl($url);
@@ -792,7 +839,7 @@ class OpenAi
 
             $this->stream_method = $stream;
         }
-        
+
         $this->addAssistantsBetaHeader();
         $url = Url::threadsUrl() . '/' . $threadId . '/runs/' . $runId . '/submit_tool_outputs';
         $this->baseUrl($url);
@@ -940,7 +987,7 @@ class OpenAi
             $this->headers[] = "OpenAI-Organization: $org";
         }
     }
-    
+
     /**
      * @param  string  $org
      */
@@ -954,10 +1001,10 @@ class OpenAi
     /**
      * @return void
      */
-    private function addAssistantsBetaHeader(){ 
+    private function addAssistantsBetaHeader(){
         $this->headers[] = 'OpenAI-Beta: assistants='.$this->assistantsBetaVersion;
     }
-    
+
 
     /**
      * @param  string  $url
@@ -1020,6 +1067,51 @@ class OpenAi
 
         return $response;
     }
+
+    /**
+     * Скачивает бинарный контент видео из OpenAI API
+     *
+     * @param string $videoId
+     * @return string бинарные данные (mp4)
+     * @throws Exception
+     */
+    private function downloadVideoContent(string $url)
+    {
+        $curl_info = [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTPHEADER => $this->headers,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ];
+
+        if (!empty($this->proxy)) {
+            $curl_info[CURLOPT_PROXY] = $this->proxy;
+        }
+
+        $curl = curl_init();
+        curl_setopt_array($curl, $curl_info);
+
+        $response = curl_exec($curl);
+        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if (curl_errno($curl)) {
+            $error = curl_error($curl);
+            curl_close($curl);
+            throw new Exception("CURL error while downloading video: $error");
+        }
+
+        curl_close($curl);
+
+        if ($http_code !== 200) {
+            throw new Exception("Video download failed, HTTP code: $http_code. Response: " . substr($response, 0, 200));
+        }
+
+        return $response;
+    }
+
 
     /**
      * @param  string  $url
