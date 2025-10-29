@@ -1029,7 +1029,7 @@ class OpenAi
     {
         $post_fields = json_encode($opts);
 
-        if (array_key_exists('file', $opts) || array_key_exists('image', $opts)) {
+        if (array_key_exists('file', $opts) || array_key_exists('image', $opts) || array_key_exists('input_reference', $opts)) {
             $this->headers[0] = $this->contentTypes["multipart/form-data"];
             $post_fields = $opts;
         } else {
