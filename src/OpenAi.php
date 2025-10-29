@@ -177,6 +177,19 @@ class OpenAi
     }
 
     /**
+     * @param array $opts
+     * @param string $videoId
+     * @return bool|string
+     */
+    public function remixVideos($opts, string $videoId)
+    {
+        $url = Url::videosUrl() . '/' . $videoId . '/remix';
+        $this->baseUrl($url);
+
+        return $this->sendRequest($url, 'POST', $opts);
+    }
+
+    /**
      * @param $opts
      * @return bool|string
      */
